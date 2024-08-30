@@ -1,0 +1,13 @@
+[package]
+name = "valrs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+clap = { version = "4.5.16", features = ["derive"] }
+serde = { version = "1.0.209", features = ["derive"] }
+quick-xml = { version = "0.36.1", features = ["serialize"] }
+serde_path_to_error = "0.1.16"
+serde-xml-rs = "0.6.0"
+zip = "2.2.0"

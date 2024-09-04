@@ -1,0 +1,15 @@
+[package]
+name = "piwis-val"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+chrono = { version = "0.4.38", features = ["serde"] }
+serde = { version = "1.0.209", features = ["derive"] }
+serde_path_to_error = "0.1.16"
+serde-untagged = "0.1"
+serde-xml-rs = "0.6.0"
+quick-xml = { version = "0.36.1", features = ["serialize"] }
+zip = "2.2.0"
+serde_json = "1.0.127"

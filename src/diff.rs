@@ -1,4 +1,3 @@
-use std::{fmt};
 use anyhow::Result;
 use piwis_val::{Measurement, ValueEnum, VehicleAnalysisLog};
 
@@ -41,21 +40,6 @@ impl DiffConfig {
     }
 }
 
-#[derive(Debug)]
-enum CompareAgainst {
-    First,
-    Second,
-}
-
-impl fmt::Display for CompareAgainst {
-    // This trait requires `fmt` with this exact signature.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            CompareAgainst::First => write!(f, "first"),
-            CompareAgainst::Second => write!(f, "second"),
-        }
-    }
-}
 
 
 macro_rules! printp0 {
@@ -91,49 +75,60 @@ fn should_compare(m: &Measurement, cfg: &DiffConfig) -> bool {
     }
 }
 
-fn print_measurements_diff(d: &CompareAgainst, p0: &mut Vec<String>, measurements: &Vec<Measurement>, other_measurements: &Vec<Measurement>, diff_config: &DiffConfig) {
+fn print_measurements_diff(p0: &mut Vec<String>, measurements: &Vec<Measurement>, other_measurements: &Vec<Measurement>, diff_config: &DiffConfig) {
     for measurement in measurements {
         if !should_compare(&measurement, diff_config) {
             continue;
         }
         p0.push(measurement.get_title().clone());
         let Some(other_measurement) = select_measurement(&other_measurements, &measurement.get_title()) else {
-            printp0!(p0, ":: measurement was not found in {} VAL", d);
+            printp0!(p0, ":: measurement was not found in second VAL");
             continue;
         };
 
         match (&measurement.get_submeasurements(), &other_measurement.get_submeasurements()) {
             (Some(nested_measurements), Some(other_nested_measurements)) =>
-                print_measurements_diff(d, p0, nested_measurements, other_nested_measurements, diff_config),
-            (Some(_), None) => printp0!(p0, ":: sub-measurements were not found in {} VAL", d),
+                print_measurements_diff(p0, nested_measurements, other_nested_measurements, diff_config),
+            (Some(_), None) => printp0!(p0, ":: sub-measurements were not found in second VAL"),
             _ => (),
         }
 
-        print_values_diff(d, p0, &measurement.get_values(), &other_measurement.get_values());
+        print_values_diff(p0, &measurement.get_values(), &other_measurement.get_values());
         p0.pop();
     }
 }
 
-fn print_values_diff(d: &CompareAgainst, p0: &mut Vec<String>, values: &Option<&Vec<ValueEnum>>, other_values: &Option<&Vec<ValueEnum>>) {
+fn print_values_diff(p0: &mut Vec<String>, values: &Option<&Vec<ValueEnum>>, other_values: &Option<&Vec<ValueEnum>>) {
     if !values.is_none() && other_values.is_none() {
-        printp0!(p0, ":: values were not found in {} VAL", d);
+        printp0!(p0, ":: values were not found in second VAL");
         return;
     }
-    if let (Some(values), Some(other_values)) = (&values, &other_values) {
-        for value in *values {
-            p0.push(value.get_label().clone());
-            let Some(other_value) = select_value(other_values, &value.get_label()) else {
-                printp0!(p0, ":: value was not found in {} VAL", d);
-                p0.pop();
-                continue;
-            };
-            if value.get_value() != other_value.get_value() {
-                printp0!(p0, ":: '{}' -> '{}'",
+    match (&values, &other_values) {
+         (Some(values), Some(other_values)) => {
+            for value in *values {
+                p0.push(value.get_label().clone());
+                let Some(other_value) = select_value(other_values, &value.get_label()) else {
+                    printp0!(p0, ":: value was not found in second VAL");
+                    p0.pop();
+                    continue;
+                };
+                if value.get_value() != other_value.get_value() {
+                    printp0!(p0, ":: '{}' -> '{}'",
                     value.get_value().unwrap_or(&"<undefined>".to_string()),
                     other_value.get_value().unwrap_or(&"<undefined>".to_string()));
+                }
+                p0.pop();
             }
-            p0.pop();
         }
+        (Some(_), None) => {
+            printp0!(p0, ":: values were not found in second VAL");
+            return;
+        }
+        (None, Some(_)) => {
+            printp0!(p0, ":: values were not found in first VAL");
+            return;
+        }
+        _ => (),
     }
 }
 
@@ -146,7 +141,6 @@ pub fn diff(args: &DiffArgs) -> Result<()> {
                                            args.include_identification,
                                            args.include_values,
                                            args.include_extended_errors);
-    let mut missing_sections1 = vec![];
     let mut missing_sections2 = vec![];
 
     let mut p0 = vec![];
@@ -154,24 +148,11 @@ pub fn diff(args: &DiffArgs) -> Result<()> {
         p0.push(section.get_title().clone());
         let Some(other_section) = val2.get_section_by_title(&section.get_title()) else {
             missing_sections2.push(section.get_title().clone());
+            p0.pop();
             continue;
         };
-        print_measurements_diff(&CompareAgainst::Second, &mut p0, &section.get_measurements(), &other_section.get_measurements(), diff_config);
+        print_measurements_diff(&mut p0, &section.get_measurements(), &other_section.get_measurements(), diff_config);
         p0.pop();
-    }
-
-    for section in val2.result.sections.iter() {
-        p0.push(section.get_title().clone());
-        let Some(other_section) = val1.get_section_by_title(&section.get_title()) else {
-            missing_sections1.push(section.get_title().clone());
-            continue;
-        };
-        print_measurements_diff(&CompareAgainst::First, &mut p0, &section.get_measurements(), &other_section.get_measurements(), diff_config);
-        p0.pop();
-    }
-
-    if missing_sections1.len() > 0 {
-        println!("Missing section(s) in first VAL: {}", missing_sections1.join(","));
     }
 
     if missing_sections2.len() > 0 {

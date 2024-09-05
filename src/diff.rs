@@ -106,7 +106,7 @@ fn print_values_diff(p0: &mut Vec<String>, values: &Option<&Vec<ValueEnum>>, oth
     match (&values, &other_values) {
          (Some(values), Some(other_values)) => {
             for value in *values {
-                p0.push(value.get_label().clone());
+                p0.push(value.get_text().clone());
                 let Some(other_value) = select_value(other_values, &value.get_label()) else {
                     printp0!(p0, ":: value was not found in second VAL");
                     p0.pop();

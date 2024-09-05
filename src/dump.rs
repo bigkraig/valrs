@@ -9,7 +9,7 @@ pub struct DumpArgs {
 fn print_measurement(p0: &mut Vec<String>, m: &Measurement) {
     if let Some(values) = &m.get_values() {
         for value in *values {
-            p0.push(value.get_label().clone());
+            p0.push(value.get_text().clone());
             println!("{}: {}", p0.join(" >> "), value.get_value().unwrap_or(&"undefined".to_string()));
             p0.pop();
         }

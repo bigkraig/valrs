@@ -127,8 +127,10 @@ fn print_values_diff(d: &CompareAgainst, p0: &mut Vec<String>, values: &Option<&
                 p0.pop();
                 continue;
             };
-            if value.get_text() != other_value.get_text() {
-                printp0!(p0, ":: '{}' -> '{}'", value.get_text(), other_value.get_text());
+            if value.get_value() != other_value.get_value() {
+                printp0!(p0, ":: '{}' -> '{}'",
+                    value.get_value().unwrap_or(&"<undefined>".to_string()),
+                    other_value.get_value().unwrap_or(&"<undefined>".to_string()));
             }
             p0.pop();
         }

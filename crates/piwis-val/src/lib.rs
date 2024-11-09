@@ -19,7 +19,7 @@ impl VehicleAnalysisLog {
         let mut archive = zip::ZipArchive::new(file)?;
         for i in 0..archive.len() {
             let file = archive.by_index(i)?;
-            if file.name().starts_with("FAP_") && file.name().ends_with(".xml") {
+            if (file.name().starts_with("FAP_") || file.name().starts_with("OBD_")) && file.name().ends_with(".xml") {
                 let reader = BufReader::new(file);
                 let val = &mut quick_xml::de::Deserializer::from_reader(reader);
                 let deserialized: VehicleAnalysisLog = serde_path_to_error::deserialize(val).context("Failed deserializing")?;

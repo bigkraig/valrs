@@ -88,8 +88,7 @@ pub struct VehicleData {
     pub operating_time: UnitString,
     #[serde(rename = "ORDERTYPE")]
     pub order_type: String,
-    #[serde(default, rename = "MODEL")]
-    pub model: String,
+    pub model: Option<String>,
     #[serde(rename = "MODELTYPE")]
     pub model_type: String,
     #[serde(rename = "ENGINETYPE")]

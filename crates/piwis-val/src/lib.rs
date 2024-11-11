@@ -81,13 +81,15 @@ pub struct VehicleIdentity {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(deny_unknown_fields, rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct VehicleData {
     pub odometer: UnitString,
     #[serde(rename = "OPERATINGTIME")]
     pub operating_time: UnitString,
     #[serde(rename = "ORDERTYPE")]
     pub order_type: String,
+    #[serde(default, rename = "MODEL")]
+    pub model: String,
     #[serde(rename = "MODELTYPE")]
     pub model_type: String,
     #[serde(rename = "ENGINETYPE")]
